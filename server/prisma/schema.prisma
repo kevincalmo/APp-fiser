@@ -1,0 +1,343 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model anomaly {
+  id                  Int           @id @default(autoincrement())
+  way_id              Int?
+  date                DateTime      @db.Date
+  type                String?       @db.VarChar(255)
+  is_collected        String        @db.VarChar(255)
+  regularization_date DateTime?     @db.Date
+  description         String?       @db.LongText
+  report_id           Int?
+  manual_town         String?       @db.VarChar(255)
+  manual_way          String?       @db.VarChar(255)
+  manual_flux         String?       @db.VarChar(255)
+  manual_truck        String?       @db.VarChar(255)
+  type_anomaly_id     Int?
+  report              report?       @relation(fields: [report_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_F9F975634BD2A4C0")
+  way                 way?          @relation(fields: [way_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_F9F975638C803113")
+  type_anomaly        type_anomaly? @relation(fields: [type_anomaly_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_F9F97563A7FAA19E")
+
+  @@index([report_id], map: "IDX_F9F975634BD2A4C0")
+  @@index([way_id], map: "IDX_F9F975638C803113")
+  @@index([type_anomaly_id], map: "IDX_F9F97563A7FAA19E")
+}
+
+model circuit {
+  id                Int      @id @default(autoincrement())
+  default_outlet_id Int?
+  name              String   @db.VarChar(255)
+  outlet            outlet?  @relation(fields: [default_outlet_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_1325F3A65B9F0545")
+  flux              flux[]
+  report            report[]
+  town              town[]
+
+  @@index([default_outlet_id], map: "IDX_1325F3A65B9F0545")
+}
+
+model collecte {
+  id                   Int                    @id @default(autoincrement())
+  date                 DateTime               @db.Date
+  observation          String                 @db.LongText
+  is_valid             Boolean
+  collecte_observation collecte_observation[]
+  report               report[]
+}
+
+model collecte_observation {
+  id          Int       @id @default(autoincrement())
+  collecte_id Int?
+  description String    @db.LongText
+  collecte    collecte? @relation(fields: [collecte_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_AAFE21C4710A9AC6")
+
+  @@index([collecte_id], map: "IDX_AAFE21C4710A9AC6")
+}
+
+model container_mouvement {
+  id                Int             @id @default(autoincrement())
+  worksite_id       Int?
+  driver_id         Int?
+  truck_id          Int?
+  flux_id           Int?
+  outlet_id         Int?
+  description       String          @db.LongText
+  tonnage           Float
+  operation_type_id Int?
+  container_type_id Int?
+  date              DateTime        @db.Date
+  container_type    container_type? @relation(fields: [container_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_F45314375B3408DE")
+  operation_type    operation_type? @relation(fields: [operation_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_F4531437668D0C5E")
+  worksite          worksite?       @relation(fields: [worksite_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_F4531437A47737E7")
+  driver            driver?         @relation(fields: [driver_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_F4531437C3423909")
+  truck             truck?          @relation(fields: [truck_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_F4531437C6957CCE")
+  flux              flux?           @relation(fields: [flux_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_F4531437C85926E")
+  outlet            outlet?         @relation(fields: [outlet_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_F4531437CAFD2DE2")
+
+  @@index([container_type_id], map: "IDX_F45314375B3408DE")
+  @@index([operation_type_id], map: "IDX_F4531437668D0C5E")
+  @@index([worksite_id], map: "IDX_F4531437A47737E7")
+  @@index([driver_id], map: "IDX_F4531437C3423909")
+  @@index([truck_id], map: "IDX_F4531437C6957CCE")
+  @@index([flux_id], map: "IDX_F4531437C85926E")
+  @@index([outlet_id], map: "IDX_F4531437CAFD2DE2")
+}
+
+model container_type {
+  id                  Int                   @id @default(autoincrement())
+  name                String                @db.VarChar(255)
+  container_mouvement container_mouvement[]
+}
+
+model doctrine_migration_versions {
+  version        String    @id
+  executed_at    DateTime? @db.DateTime(0)
+  execution_time Int?
+}
+
+model driver {
+  id                  Int                   @id @default(autoincrement())
+  last_name           String                @db.VarChar(255)
+  first_name          String                @db.VarChar(255)
+  type                String?               @db.VarChar(255)
+  container_mouvement container_mouvement[]
+  replacement_team    replacement_team[]
+  sinister            sinister[]
+  team                team?
+}
+
+model flux {
+  id                  Int                   @id @default(autoincrement())
+  name                String                @db.VarChar(255)
+  circuit_id          Int?
+  container_mouvement container_mouvement[]
+  circuit             circuit?              @relation(fields: [circuit_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_7252313ACF2182C8")
+  report              report[]
+  team                team[]
+
+  @@index([circuit_id], map: "IDX_7252313ACF2182C8")
+}
+
+model messenger_messages {
+  id           BigInt    @id @default(autoincrement())
+  body         String    @db.LongText
+  headers      String    @db.LongText
+  queue_name   String    @db.VarChar(190)
+  created_at   DateTime  @db.DateTime(0)
+  available_at DateTime  @db.DateTime(0)
+  delivered_at DateTime? @db.DateTime(0)
+
+  @@index([delivered_at], map: "IDX_75EA56E016BA31DB")
+  @@index([available_at], map: "IDX_75EA56E0E3BD61CE")
+  @@index([queue_name], map: "IDX_75EA56E0FB7336F0")
+}
+
+model operation_type {
+  id                  Int                   @id @default(autoincrement())
+  name                String                @db.VarChar(255)
+  container_mouvement container_mouvement[]
+}
+
+model outlet {
+  id                                       Int                   @id @default(autoincrement())
+  name                                     String                @db.VarChar(255)
+  circuit                                  circuit[]
+  container_mouvement                      container_mouvement[]
+  report_report_visited_outlet4_idTooutlet report[]              @relation("report_visited_outlet4_idTooutlet")
+  report_report_visited_outlet2_idTooutlet report[]              @relation("report_visited_outlet2_idTooutlet")
+  report_report_default_outlet_idTooutlet  report[]              @relation("report_default_outlet_idTooutlet")
+  report_report_default_outlet3_idTooutlet report[]              @relation("report_default_outlet3_idTooutlet")
+  report_report_visited_outlet3_idTooutlet report[]              @relation("report_visited_outlet3_idTooutlet")
+  report_report_visited_outlet_idTooutlet  report[]              @relation("report_visited_outlet_idTooutlet")
+  report_report_default_outlet2_idTooutlet report[]              @relation("report_default_outlet2_idTooutlet")
+  report_report_default_outlet4_idTooutlet report[]              @relation("report_default_outlet4_idTooutlet")
+}
+
+model replacement_team {
+  id                                                    Int     @id @default(autoincrement())
+  substitute_driver_id                                  Int?
+  substitute_ripper1_id                                 Int?
+  substitute_ripper2_id                                 Int?
+  ripper_replacement_team_substitute_ripper2_idToripper ripper? @relation("replacement_team_substitute_ripper2_idToripper", fields: [substitute_ripper2_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_D7177897A0946D28")
+  ripper_replacement_team_substitute_ripper1_idToripper ripper? @relation("replacement_team_substitute_ripper1_idToripper", fields: [substitute_ripper1_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_D7177897B221C2C6")
+  driver                                                driver? @relation(fields: [substitute_driver_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_D7177897FC53B99F")
+  team                                                  team?
+
+  @@index([substitute_ripper2_id], map: "IDX_D7177897A0946D28")
+  @@index([substitute_ripper1_id], map: "IDX_D7177897B221C2C6")
+  @@index([substitute_driver_id], map: "IDX_D7177897FC53B99F")
+}
+
+model report {
+  id                                       Int       @id @default(autoincrement())
+  default_outlet_id                        Int?
+  visited_outlet_id                        Int?
+  flux_id                                  Int?
+  truck_id                                 Int?
+  date                                     DateTime  @db.Date
+  manual_circuit                           String?   @db.VarChar(255)
+  total_bac_collected                      Int
+  total_bac_rejected                       Int
+  tonnage                                  Float?
+  tonnage2                                 Float?
+  default_outlet2_id                       Int?
+  visited_outlet2_id                       Int?
+  default_outlet3_id                       Int?
+  visited_outlet3_id                       Int?
+  default_outlet4_id                       Int?
+  visited_outlet4_id                       Int?
+  tonnage3                                 Float?
+  tonnage4                                 Float?
+  circuit_id                               Int?
+  collecte_id                              Int?
+  observation                              String?   @db.LongText
+  geoloc_id                                Int?
+  anomaly                                  anomaly[]
+  outlet_report_visited_outlet4_idTooutlet outlet?   @relation("report_visited_outlet4_idTooutlet", fields: [visited_outlet4_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_C42F77841C45811C")
+  outlet_report_visited_outlet2_idTooutlet outlet?   @relation("report_visited_outlet2_idTooutlet", fields: [visited_outlet2_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_C42F7784392EDEC0")
+  outlet_report_default_outlet_idTooutlet  outlet?   @relation("report_default_outlet_idTooutlet", fields: [default_outlet_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_C42F77845B9F0545")
+  collecte                                 collecte? @relation(fields: [collecte_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_C42F7784710A9AC6")
+  outlet_report_default_outlet3_idTooutlet outlet?   @relation("report_default_outlet3_idTooutlet", fields: [default_outlet3_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_C42F77847A88CF02")
+  outlet_report_visited_outlet3_idTooutlet outlet?   @relation("report_visited_outlet3_idTooutlet", fields: [visited_outlet3_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_C42F77848192B9A5")
+  outlet_report_visited_outlet_idTooutlet  outlet?   @relation("report_visited_outlet_idTooutlet", fields: [visited_outlet_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_C42F778495A5C71A")
+  outlet_report_default_outlet2_idTooutlet outlet?   @relation("report_default_outlet2_idTooutlet", fields: [default_outlet2_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_C42F7784C234A867")
+  truck                                    truck?    @relation(fields: [truck_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_C42F7784C6957CCE")
+  flux                                     flux?     @relation(fields: [flux_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_C42F7784C85926E")
+  circuit                                  circuit?  @relation(fields: [circuit_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_C42F7784CF2182C8")
+  outlet_report_default_outlet4_idTooutlet outlet?   @relation("report_default_outlet4_idTooutlet", fields: [default_outlet4_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_C42F7784E75FF7BB")
+  tablet                                   tablet?   @relation(fields: [geoloc_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_C42F7784EF390162")
+
+  @@index([visited_outlet4_id], map: "IDX_C42F77841C45811C")
+  @@index([visited_outlet2_id], map: "IDX_C42F7784392EDEC0")
+  @@index([default_outlet_id], map: "IDX_C42F77845B9F0545")
+  @@index([collecte_id], map: "IDX_C42F7784710A9AC6")
+  @@index([default_outlet3_id], map: "IDX_C42F77847A88CF02")
+  @@index([visited_outlet3_id], map: "IDX_C42F77848192B9A5")
+  @@index([visited_outlet_id], map: "IDX_C42F778495A5C71A")
+  @@index([default_outlet2_id], map: "IDX_C42F7784C234A867")
+  @@index([truck_id], map: "IDX_C42F7784C6957CCE")
+  @@index([flux_id], map: "IDX_C42F7784C85926E")
+  @@index([circuit_id], map: "IDX_C42F7784CF2182C8")
+  @@index([default_outlet4_id], map: "IDX_C42F7784E75FF7BB")
+  @@index([geoloc_id], map: "IDX_C42F7784EF390162")
+}
+
+model ripper {
+  id                                                              Int                @id @default(autoincrement())
+  last_name                                                       String             @db.VarChar(255)
+  first_name                                                      String             @db.VarChar(255)
+  replacement_team_replacement_team_substitute_ripper2_idToripper replacement_team[] @relation("replacement_team_substitute_ripper2_idToripper")
+  replacement_team_replacement_team_substitute_ripper1_idToripper replacement_team[] @relation("replacement_team_substitute_ripper1_idToripper")
+  team_team_ripper1_idToripper                                    team?              @relation("team_ripper1_idToripper")
+  team_team_ripper2_idToripper                                    team?              @relation("team_ripper2_idToripper")
+}
+
+model sinister {
+  id                Int      @id @default(autoincrement())
+  truck_id          Int?
+  driver_id         Int?
+  date              DateTime @db.Date
+  place             String   @db.VarChar(255)
+  opposing_vehicule String?  @db.VarChar(255)
+  opposing_driver   String?  @db.VarChar(255)
+  circumstance      String?  @db.LongText
+  status            String   @db.VarChar(255)
+  observation       String?  @db.LongText
+  driver            driver?  @relation(fields: [driver_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_73FC7B36C3423909")
+  truck             truck?   @relation(fields: [truck_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_73FC7B36C6957CCE")
+
+  @@index([driver_id], map: "IDX_73FC7B36C3423909")
+  @@index([truck_id], map: "IDX_73FC7B36C6957CCE")
+}
+
+model tablet {
+  id     Int      @id @default(autoincrement())
+  label  String   @db.VarChar(255)
+  report report[]
+}
+
+model team {
+  id                             Int               @id @default(autoincrement())
+  driver_id                      Int?              @unique(map: "UNIQ_C4E0A61FC3423909")
+  flux_id                        Int?
+  ripper1_id                     Int?              @unique(map: "UNIQ_C4E0A61FAB72E537")
+  ripper2_id                     Int?              @unique(map: "UNIQ_C4E0A61FB9C74AD9")
+  truck_id                       Int?
+  replacement_team_id            Int?              @unique(map: "UNIQ_C4E0A61FFA281DAB")
+  name                           String            @db.VarChar(255)
+  manual_circuit                 String?           @db.VarChar(255)
+  manual_tablet                  String?           @db.VarChar(255)
+  ripper_team_ripper1_idToripper ripper?           @relation("team_ripper1_idToripper", fields: [ripper1_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_C4E0A61FAB72E537")
+  ripper_team_ripper2_idToripper ripper?           @relation("team_ripper2_idToripper", fields: [ripper2_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_C4E0A61FB9C74AD9")
+  driver                         driver?           @relation(fields: [driver_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_C4E0A61FC3423909")
+  truck                          truck?            @relation(fields: [truck_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_C4E0A61FC6957CCE")
+  flux                           flux?             @relation(fields: [flux_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_C4E0A61FC85926E")
+  replacement_team               replacement_team? @relation(fields: [replacement_team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_C4E0A61FFA281DAB")
+
+  @@index([truck_id], map: "IDX_C4E0A61FC6957CCE")
+  @@index([flux_id], map: "IDX_C4E0A61FC85926E")
+}
+
+model town {
+  id          Int        @id @default(autoincrement())
+  circuit_id  Int?
+  name        String     @db.VarChar(255)
+  postal_code Int
+  circuit     circuit?   @relation(fields: [circuit_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_4CE6C7A4CF2182C8")
+  way         way[]
+  worksite    worksite[]
+
+  @@index([circuit_id], map: "IDX_4CE6C7A4CF2182C8")
+}
+
+model truck {
+  id                  Int                   @id @default(autoincrement())
+  registration        String                @db.VarChar(255)
+  type                String?               @db.VarChar(255)
+  container_mouvement container_mouvement[]
+  report              report[]
+  sinister            sinister[]
+  team                team[]
+}
+
+model type_anomaly {
+  id      Int       @id @default(autoincrement())
+  name    String    @db.VarChar(255)
+  anomaly anomaly[]
+}
+
+model user {
+  id       Int    @id @default(autoincrement())
+  email    String @unique(map: "UNIQ_8D93D649E7927C74") @db.VarChar(180)
+  roles    Json
+  password String @db.VarChar(255)
+  refresh_token String @db.LongText
+}
+
+model way {
+  id      Int       @id @default(autoincrement())
+  town_id Int?
+  name    String    @db.VarChar(255)
+  type    String?   @db.VarChar(255)
+  anomaly anomaly[]
+  town    town?     @relation(fields: [town_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_FBC034B975E23604")
+
+  @@index([town_id], map: "IDX_FBC034B975E23604")
+}
+
+model worksite {
+  id                  Int                   @id @default(autoincrement())
+  town_id             Int?
+  name                String                @db.VarChar(255)
+  adress              String?               @db.VarChar(255)
+  container_mouvement container_mouvement[]
+  town                town?                 @relation(fields: [town_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5E46478275E23604")
+
+  @@index([town_id], map: "IDX_5E46478275E23604")
+}
