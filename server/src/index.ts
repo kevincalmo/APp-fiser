@@ -9,6 +9,7 @@ import { verifyJwt } from "./middlewares/verifyJwt.handler";
 import cookieParser from "cookie-parser";
 import { credentials } from "./middlewares/credentials.handler";
 import { corsOptions } from "./config/corsOptions";
+import { ExtractController } from "./ressources/extraction/extraction.controller";
 
 /**
  * On créé une nouvelle "application" express
@@ -36,8 +37,9 @@ app.use(cors(corsOptions));
 /**
  * Toutes les routes CRUD pour les animaux seronts préfixées par `/pets`
  */
-app.use("/api",verifyJwt);
+//app.use("/api",verifyJwt);
 app.use("/api/pets", PetsController);
+app.use("/api/extraction", ExtractController)
 app.use("/auth", AuthController);
 
 /**

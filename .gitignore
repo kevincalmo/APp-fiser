@@ -30,4 +30,4 @@ client/*.sw?
 
 #server
 server/.env
-server/.node_modules
+server/node_modules
