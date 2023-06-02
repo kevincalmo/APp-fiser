@@ -10,6 +10,7 @@ import cookieParser from "cookie-parser";
 import { credentials } from "./middlewares/credentials.handler";
 import { corsOptions } from "./config/corsOptions";
 import { ExtractController } from "./ressources/extraction/extraction.controller";
+import { JourneyController } from "./ressources/journey/journey.controller";
 
 /**
  * On créé une nouvelle "application" express
@@ -39,7 +40,8 @@ app.use(cors(corsOptions));
  */
 //app.use("/api",verifyJwt);
 app.use("/api/pets", PetsController);
-app.use("/api/extraction", ExtractController)
+app.use("/api/extraction", ExtractController);
+app.use("/api/journey",JourneyController);
 app.use("/auth", AuthController);
 
 /**
